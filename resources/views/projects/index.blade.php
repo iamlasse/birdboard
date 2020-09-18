@@ -8,12 +8,20 @@
   <title>Document</title>
 </head>
 <body>
-  <h1>Bordboard</h1>
-  <ul>
-    @foreach( $projects as $project)
-      <li>{{ $project->title }}</li>
-    @endforeach
-  </ul>
+<h1>Bordboard</h1>
+<ul>
+  @forelse( $projects as $project)
+    <li>
+      <a href="{{ $project->path() }}">
+        {{ $project->title }}
+      </a>
+    </li>
+  @empty
+    <li>
+      <h3>No Projects</h3>
+    </li>
+  @endforelse
+</ul>
 
 </body>
 </html>

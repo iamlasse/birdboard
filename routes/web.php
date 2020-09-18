@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\GithubAuthController;
+use App\Http\Controllers\ProjectInvitesController;
 use App\Http\Controllers\ProjectsController;
+use App\Http\Controllers\ProjectTasksController;
 use App\Models\Project;
 use Illuminate\Support\Facades\Route;
 
@@ -16,9 +19,23 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+  return view('welcome');
 });
 
 
-Route::get('/projects', [ProjectsController::class, 'index']);
-Route::post('/projects', [ProjectsController::class, 'store']);
+Route::group(['middleware' => 'auth'], function () {
+  Route::resource('projects', ProjectsController::class);
+  
+  Route::post('/invites/{project}', [ProjectInvitesController::class, 'store'])->name('project.invite');
+  Route::post('/projects/{project}/tasks', [ProjectTasksController::class, 'store'])->name('project.tasks');
+  Route::patch('/projects/{project}/tasks/{task}', [ProjectTasksController::class, 'update'])->name('tasks.update');
+});
+
+
+Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
+  return Inertia\Inertia::render('Dashboard');
+})->name('dashboard');
+
+
+Route::get('login/github', [GithubAuthController::class, 'create']);
+Route::get('login/github/callback', [GithubAuthController::class, 'store']);

@@ -1,0 +1,9 @@
+.card {
+  @apply .bg-white .rounded-md .p-6 .shadow-theme .flex;
+}
+
+button:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  @apply .opacity-50;
+}

@@ -17,7 +17,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/home';
+    public const HOME = '/dashboard';
 
     /**
      * If specified, this namespace is automatically applied to your controller routes.
@@ -37,14 +37,16 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
 
-        $this->routes(function () {
-            Route::middleware('web')
+        $this->routes(
+            function () {
+                Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
-            Route::prefix('api')
-                ->middleware('api')
-                ->group(base_path('routes/api.php'));
-        });
+                Route::prefix('api')
+                    ->middleware('api')
+                    ->group(base_path('routes/api.php'));
+            }
+        );
     }
 
     /**
@@ -54,8 +56,10 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting()
     {
-        RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60);
-        });
+        RateLimiter::for(
+            'api', function (Request $request) {
+                return Limit::perMinute(60);
+            }
+        );
     }
 }

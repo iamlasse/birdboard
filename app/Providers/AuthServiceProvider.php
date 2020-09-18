@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Project;
+use App\Models\Task;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Auth\Access\Response;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -13,7 +16,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array
      */
     protected $policies = [
-        // 'App\Model' => 'App\Policies\ModelPolicy',
+        'App\Models\Project' => 'App\Policies\ProjectPolicy',
     ];
 
     /**
@@ -24,7 +27,9 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
-
-        //
+        
+        // Gate::define('edit-tasks', function ($user, Project $project, Task $task) {
+        //     return ($user->id === $project->owner->id && $task->project->id === $project->id) ? Response::allow() : Response::deny('You must be the project owner or administrator.');
+        // });
     }
 }
