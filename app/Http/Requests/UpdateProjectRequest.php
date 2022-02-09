@@ -2,9 +2,13 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Project;
+use App\Jobs\TestQueue;
+use App\Events\ProjectUpdated;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Notifications\TestBroadcastNotification;
 
 class UpdateProjectRequest extends FormRequest
 {
@@ -15,7 +19,7 @@ class UpdateProjectRequest extends FormRequest
      */
     public function authorize()
     {   
-        return Gate::allows('update', $this->project());
+        return Gate::allows('update', $this->project);
     }
 
     /**
@@ -32,13 +36,18 @@ class UpdateProjectRequest extends FormRequest
         ];
     }
 
-    public function project()
-    {
-        return Project::findOrFail($this->route('project'));
-    }
-
     public function save()
     {
-        return tap($this->project())->update($this->validated());
+        // $job = new TestQueue($this->project);
+        // TestQueue::dispatch($this->project)->delay(now()->addSeconds(30))->onQueue('email');
+        // TestQueue::dispatch($this->project)->delay(now()->addSeconds(30))->onQueue('important');
+        
+        $project = tap($this->project)->update($this->validated());
+        // request()->user()->notify(new TestBroadcastNotification($this->project));
+        // Bus::dispatch($job);
+        event(new ProjectUpdated($project));
+        // app(Dispatcher::class)->dispatch($job);
+        // ProjectUpdated::broadcast($this->project);
+        return $project;
     }
 }

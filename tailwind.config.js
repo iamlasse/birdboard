@@ -11,6 +11,9 @@ module.exports = {
             borderWidth: {
                 6: '6px'
             },
+            fontSize: {
+                '9xl': '8rem'
+            },
             colors: {
                 'grey-light': '#F5F6F9'
             },
@@ -24,7 +27,7 @@ module.exports = {
     },
 
     variants: {
-        opacity: ['responsive', 'hover', 'focus', 'disabled'],
+        opacity: ['disabled'],
     },
 
     plugins: [require('@tailwindcss/ui')],

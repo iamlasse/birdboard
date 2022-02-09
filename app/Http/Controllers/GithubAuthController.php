@@ -46,7 +46,7 @@ class GithubAuthController extends Controller
 
         auth()->login($newUser);
 
-        return redirect(route('dashboard'));
+        return redirect(route('projects.index'));
 
 
     }

@@ -19,6 +19,8 @@
         @routes
     </head>
     <body class="font-sans antialiased">
+        @yield('content')
         @inertia
+        <livewire:scripts />
     </body>
 </html>

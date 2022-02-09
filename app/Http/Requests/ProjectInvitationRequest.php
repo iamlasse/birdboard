@@ -3,11 +3,14 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
-use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Foundation\Http\FormRequest;
 
 class ProjectInvitationRequest extends FormRequest
 {
+    protected $errorBag = 'project';
+    public $invitee;
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -15,7 +18,7 @@ class ProjectInvitationRequest extends FormRequest
      */
     public function authorize()
     {
-        return Gate::allows('update', $this->route('project'));
+        return Gate::allows('manage', $this->project);
     }
 
     /**
@@ -25,17 +28,31 @@ class ProjectInvitationRequest extends FormRequest
      */
     public function rules()
     {
+        // dd(request('email'));
         return [
-            'email' => ['required', 'exists:users,email', function ($attribute, $value, $fail) {
-                $user = User::whereEmail($value)->first();
-                $project = $this->route('project');
-                
-                if($user) {
-                    if($project->members()->where('user_id', $user->id)->where('project_id', $project->id)->exists()) {
-                        $fail('You have already invited a user with this email');
+            'email' => [
+                'required', 
+                'exists:users',
+                // Rule::unique('project_members','user_id')->where(function ($query) {
+                //     $user = User::whereEmail(request('email'))->first();
+                //     return $query->where([
+                //         ['project_id', $this->project->id],
+                //         ['user_id', $user->id]
+                //     ]);
+                // })
+                function ($_, $value, $fail) {
+                    $user = User::whereEmail($value)->first();
+                    $project = $this->project;
+                    if($user && $project->hasMember($user)) {
+                        $fail('You have already invited a user with :attribute: :input');
                     }
-                }
-            }
+
+                    if($user && $user->is(auth()->user())) {
+                        $fail('You cannot invite yourself to the project');
+                    }
+
+                    $this->invitee = $user;
+                },
             ]
         ];
     }
@@ -43,7 +60,7 @@ class ProjectInvitationRequest extends FormRequest
     public function messages()
     {
         return [
-            'email.exists' => 'There is no user with this email address'
+            'email.exists' => 'There is no user with this :attribute',
         ];
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Exceptions;
 
+use Inertia\Inertia;
+use Illuminate\Support\Facades\App;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
@@ -32,6 +35,27 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        //
+        // $this->renderable(function (ProjectsException $e, $request) {
+        //     return redirect(route('projects.index'));
+        // });
+    }
+
+    public function render($request, \Throwable $e)
+    {
+        $response = parent::render($request, $e);
+        
+        if ($e instanceof AuthorizationException) {
+            return redirect(route('projects.index'));
+        }
+            // dd($exception);
+        if ($response->status() === 419) {
+            return back()->with(
+                [
+                'message' => 'The page expired, please try again.',
+                    ]
+            );
+        }
+        
+        return $response;
     }
 }

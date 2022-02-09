@@ -22,26 +22,13 @@ class ManageProjectsTest extends TestCase
   public function a_user_can_create_a_project()
   {
     $this->signIn();
-
-    $attributes = [
-      'title' => $this->faker->word(3),
-      'description' => $this->faker->paragraph(3),
-      'notes' => 'General notes here.'
-    ];
-
     $this->get('/projects/create')->assertStatus(200);
-
-    $response = $this->post('/projects', $attributes);
-    $project = Project::where($attributes)->first();
-    // Hardcode the project id as there is only one project in db.
-    $response->assertRedirect($project->path());
-
-    $this->get($project->path())
+    $this->followingRedirects()
+      ->post('/projects', $attributes = Project::factory()->raw())
       ->assertSee($attributes['title'])
       ->assertSee($attributes['description'])
       ->assertSee($attributes['notes']);
   }
-
 
   /** @test */
   public function unauthorized_users_cannot_delete_projects(){
@@ -52,11 +39,16 @@ class ManageProjectsTest extends TestCase
     $this->delete($project->path())
     ->assertRedirect('/login');
     
-    $this->signIn();
+    $user = $this->signIn();
+    
+    $this->delete($project->path())->assertStatus(403);
+    
+    $project->invite($user);
+    
+    $this->actingAs($user)->delete($project->path())->assertStatus(403);
   
-    $this->delete($project->path())
-    ->assertStatus(403);
   }
+
   /** @test */
   public function an_authenticated_user_can_delete_a_project(){
     $this->withoutExceptionHandling();
@@ -178,4 +170,19 @@ class ManageProjectsTest extends TestCase
     $this->get(action([ProjectsController::class, 'index']))->assertSee($project->title);
   }
 
+  /** @test */
+  public function tasks_can_be_saved_along_with_a_project_on_creation(){
+    $this->withoutExceptionHandling();
+    $this->signIn();
+    $attributes = Project::factory()->raw();
+
+    $attributes['tasks'] = [
+      ['body' => 'Task 1'],
+      ['body' => 'Task 2'],
+    ];
+
+    $this->post(route('projects.store'), $attributes);
+
+    $this->assertCount(2, Project::first()->tasks);
+  }
 }

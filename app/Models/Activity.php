@@ -11,6 +11,8 @@ class Activity extends Model
 
     protected $guarded = [];
 
+    protected $with = ['user'];
+
     protected $casts = [
         'changes' => 'array'
     ];

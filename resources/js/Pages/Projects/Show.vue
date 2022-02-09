@@ -1,11 +1,30 @@
 <template>
   <app-layout>
     <template #header>
-      <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-white">
           {{ project.title }}
         </h2>
-        <a
+        <div class="flex items-center justify-end actions">
+          <div class="mr-10 refresh" v-if="refreshProject">
+            <button @click="handleRefresh" class="px-4 py-1 text-xs text-white bg-indigo-500 rounded-full focus:outline-none">Refresh for updates</button>
+          </div>
+          <div class="flex present-members" v-if="presentMembers.length">
+            <div class="flex mr-4 avatars ">
+              <div
+                class="-ml-6 member"
+                v-for="(member) in presentMembers"
+                :key="member.id"
+              >
+                <img
+                  :src="member.avatar"
+                  alt="User Avatar"
+                  class="w-10 h-10 border border-gray-200 rounded-full"
+                >
+              </div>
+            </div>
+          </div>
+          <a
           href="#"
           @click.prevent="showEditModal = true"
         >
@@ -23,15 +42,16 @@
             />
           </svg>
         </a>
+        </div>
       </div>
     </template>
     <div
-      class="flex container mx-auto"
+      class="container flex mx-auto"
       style="margin-top: 2px"
     >
-      <div class="project-page container mx-auto p-8 w-4/5">
-        <header class="project-header flex justify-between items-center">
-          <div class="left flex justify-start items-center space-x-4">
+      <div class="container w-4/5 p-8 mx-auto project-page">
+        <header class="flex items-center justify-between project-header">
+          <div class="flex items-center justify-start space-x-4 left">
             <div class="breadcrumb ">
               <h3 class="text-gray-400">
                 <inertia-link
@@ -42,22 +62,40 @@
             </div>
             <!-- <jet-button
               @click.native="showTaskModal = !showTaskModal"
-              class="bg-indigo-500 text-white shadow-md py-2 px-4 rounded-md"
+              class="px-4 py-2 text-white bg-indigo-500 rounded-md shadow-md"
             >Add Task</jet-button> -->
           </div>
 
-          <div class="right flex justify-end items-center">
-            <div class="avatars"></div>
-            <div class="action" v-if="project.owner.id === $page.user.id">
-              <jet-button @click.native="showInviteModal = true" class="bg-indigo-500 shadow-md">Invite to Project</jet-button>
+          <div class="flex items-center justify-end right">
+            <div class="flex mr-4 avatars">
+              <div
+                class="-ml-6 member"
+                v-for="(member) in members"
+                :key="member.id"
+              >
+                <img
+                  :src="member.avatar"
+                  alt="User Avatar"
+                  class="w-10 h-10 border border-gray-200 rounded-full"
+                >
+              </div>
+            </div>
+            <div
+              class="action"
+              v-if="project.owner.id === $page.user.id"
+            >
+              <jet-button
+                @click.native="showInviteModal = true"
+                class="bg-indigo-500 shadow-md"
+              >Invite to Project</jet-button>
             </div>
           </div>
 
         </header>
         <!-- Tasks -->
-        <h2 class="text-gray-400 text-md font-semibold">Tasks</h2>
-        <div class="task-list space-y-4">
-          <div class="card opacity-50 p-0">
+        <h2 class="font-semibold text-gray-400 text-md">Tasks</h2>
+        <div class="space-y-4 task-list">
+          <div class="p-0 opacity-50 card bg-gray-50 dark:bg-gray-800">
             <form
               action="#"
               method="post"
@@ -70,23 +108,23 @@
                 aria-placeholder="Project Title"
                 placeholder="Add a Task here..."
                 type="text"
-                class="mt-1 block w-full p-2 px-4"
-                v-model="taskForm.body"
+                class="block w-full p-2 px-4 mt-1"
+                v-model.lazy="taskForm.body"
                 autocomplete="body"
               />
 
             </form>
-
           </div>
           <div
-            class="card align-middle items-center p-4"
+            class=""
             v-for="task in project.tasks"
             :key="task.id"
           >
-            <input
+            <div class="flex items-center justify-between p-4 align-middle card bg-gray-50 dark:bg-gray-800">
+              <input
               type="text"
               v-model="task.body"
-              class="w-full focus:outline-none"
+              class="w-full text-gray-700 focus:outline-none bg-gray-50 dark:bg-gray-800 dark:text-white"
               @keyup.enter="updateTask(task)"
               @update="$event.target.blur()"
               :class="{ 'text-gray-400': task.completed }"
@@ -94,16 +132,20 @@
             <input
               type="checkbox"
               v-model="task.completed"
-              class="flex-1"
+              class="flex-1 bg-gray-50 dark:bg-gray-800"
               @input="toggleComplete(task)"
             />
+            </div>
+          <div class="flex justify-between mt-1">
+            <span class="text-xs text-gray-500">{{ userNotation(task) }}</span>
+            <small class="text-gray-500 teext-xs">{{ activityTime(task.created_at) }}</small>
           </div>
-
+          </div>
         </div>
 
         <!-- General Notes -->
-        <div class="general-notes mt-6">
-          <h2 class="text-gray-400 text-md font-semibold">General Notes</h2>
+        <div class="mt-6 general-notes">
+          <h2 class="font-semibold text-gray-400 text-md">General Notes</h2>
           <form
             action="#"
             @submit.prevent="updateProject"
@@ -114,7 +156,7 @@
               id="notes"
               cols="30"
               rows="10"
-              class="p-6"
+              class="p-6 text-gray-800 outline-none bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none"
               v-model="updateProjectForm.notes"
             ></textarea>
             <div class="action">
@@ -123,15 +165,26 @@
           </form>
         </div>
       </div>
-      <div class="project-sidebar container mx-auto p-8 w-1/5 bg-gray-50 h-full h-screen">
+      <div class="container w-1/5 p-8 mx-auto project-sidebar bg-gray-50 dark:bg-gray-800">
         <!-- Tasks -->
-        <h2 class="text-gray-400 text-md font-semibold">Latest Updates</h2>
+        <h2 class="font-semibold text-gray-400 text-md">Latest Updates</h2>
         <ul>
-          <li v-for="activity in project.activities" :key="activity.id" class="m-0 space-y-0 leading-none mb-2 order-last">
-            <strong>{{ userNotation(activity) }}</strong>
-            <span class="text-sm">{{ activityDecription(activity) }}</span> <small class="text-gray-500 text-xs">{{ activityTime(activity.created_at)}}</small>
+          <li
+            v-for="activity in activities.slice(0, 10)"
+            :key="activity.id"
+            class="order-last m-0 mb-2 space-y-0 leading-none text-gray-800 dark:text-gray-50"
+          >
+            <strong class="text-gray-800 dark:text-gray-50">{{ userNotation(activity) }}</strong><br/>
+            <span class="text-sm text-gray-800 dark:text-gray-50">{{ activityDecription(activity) }}</span> <br/>
+            <small class="text-xs text-gray-500">{{ activityTime(activity.created_at)}}</small>
           </li>
         </ul>
+
+        <inertia-link
+          class="mt-4 text-teal-500"
+          v-if="project.activities.length > 10"
+          href="1"
+        >See all activity ({{activities.length}}) </inertia-link>
       </div>
     </div>
     <!-- Modal.... -->
@@ -156,7 +209,7 @@
               <jet-input
                 id="title"
                 type="text"
-                class="mt-1 block w-full"
+                class="block w-full mt-1"
                 v-model="updateProjectForm.title"
                 autofocus
               />
@@ -174,7 +227,7 @@
               <textarea
                 id="name"
                 type="text"
-                class="mt-1 block w-full"
+                class="block w-full mt-1"
                 v-model="updateProjectForm.description"
                 autofocus
               ></textarea>
@@ -184,14 +237,6 @@
               />
             </div>
           </template>
-
-          <!-- <template #actions>
-                
-
-                <jet-button :class="{ 'opacity-25': updateProjectForm.processing }" :disabled="updateProjectForm.processing">
-                    Create
-                </jet-button>
-            </template> -->
         </jet-form-section>
       </template>
 
@@ -199,43 +244,44 @@
         <div class="flex items-center justify-between">
           <div class="left-buttons">
             <jet-button
+              v-if="isOwner"
               @click.native="deleteProject"
-              class="bg-red-500 shadow-md p-4 text-white rounded-md"
+              class="p-4 text-white bg-red-500 rounded-md shadow-md"
               type="submit"
             >Delete</jet-button>
           </div>
 
-          <div class="flex justify-end  space-x-4 right-buttons">
-          <jet-action-message
-            :on="updateProjectForm.recentlySuccessful"
-            class="mr-3"
-          >
-            Updated.
-          </jet-action-message>
-          <jet-secondary-button @click.native="showEditModal = false">
-            Cancel
-          </jet-secondary-button>
-          <jet-button
-            @click.native="updateProject"
-            class="bg-indigo-500 shadow-md p-4 text-white rounded-md"
-            type="submit"
-          >Update</jet-button>
+          <div class="flex items-center justify-end space-x-4 right-buttons">
+            <jet-action-message
+              :on="updateProjectForm.recentlySuccessful"
+              class="mr-3"
+            >
+              Updated.
+            </jet-action-message>
+            <jet-secondary-button @click.native="showEditModal = false">
+              Cancel
+            </jet-secondary-button>
+            <jet-button
+              @click.native="updateProject"
+              class="p-4 text-white bg-indigo-500 rounded-md shadow-md"
+              type="submit"
+            >Update</jet-button>
+          </div>
         </div>
-        </div>
-        
+
       </template>
     </jet-dialog-modal>
 
     <jet-dialog-modal
-    :show="showInviteModal"
-      @close="showInviteModal = false"
+      :show="showInviteModal"
+      @close="showInviteModal = false; resetInviteForm()"
     >
       <template #content>
         <jet-form-section @submitted="inviteMember">
-          
+
           <template #form>
             <div class="col-span-12 sm:col-span-12">
-              
+
               <jet-label
                 for="email"
                 value="Email"
@@ -243,26 +289,30 @@
               <jet-input
                 id="email"
                 type="text"
-                class="mt-1 block w-full"
+                class="block w-full mt-1"
                 v-model="inviteForm.email"
                 autofocus
                 ref="inviteEmail"
               />
               <jet-input-error
-                :message="$page.errors.email"
+                :message="inviteForm.error('email')"
                 class="mt-2"
               />
             </div>
-            
+
           </template>
 
         </jet-form-section>
       </template>
-          <template #footer>
-                <jet-button @click.native="inviteMember" :class="{ 'opacity-25': inviteForm.processing }" :disabled="inviteForm.processing || !inviteForm.email">
-                    Invite Member
-                </jet-button>
-            </template>
+      <template #footer>
+        <jet-button
+          @click.native="inviteMember"
+          :class="{ 'opacity-25': inviteForm.processing }"
+          :disabled="inviteForm.processing || !inviteForm.email"
+        >
+          Invite Member
+        </jet-button>
+      </template>
     </jet-dialog-modal>
   </app-layout>
 </template>
@@ -278,18 +328,21 @@ import JetDialogModal from "../../Jetstream/DialogModal";
 import JetInputError from "../../Jetstream/InputError";
 import JetFormSection from "../../Jetstream/FormSection";
 
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-dayjs.extend(relativeTime)
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
-const camelcase = text => text.replaceAll('_', ' ')
+const camelcase = (text) => text.replaceAll("_", " ");
 
-const capitalize = text => text.toLowerCase()
-    .split(' ')
+const capitalize = (text) =>
+  text
+    .toLowerCase()
+    .split(" ")
     .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
-    .join(' ');
+    .join(" ");
 
 export default {
+  inject: ["echo"],
   components: {
     AppLayout,
     "jet-action-message": JetActionMessage,
@@ -307,80 +360,163 @@ export default {
 
   data() {
     return {
+      refreshProject: false,
       showInviteModal: false,
       showTaskModal: false,
       showEditModal: false,
-      inviteForm: this.$inertia.form({
-        email: null
-      }, {
-        bag: 'inviteMember',
-        resetOnSuccess: true
-      }),
+      participants: [],
+      inviteForm: this.$inertia.form(
+        {
+          email: null,
+        },
+        {
+          bag: "project",
+          resetOnSuccess: true,
+        }
+      ),
       taskForm: this.$inertia.form({
+        user_id: this.$page.user.id,
         body: null,
       }),
       updateProjectForm: this.$inertia.form(
         {
           title: this.project.title,
           description: this.project.description,
-          notes: this.project.notes
+          notes: this.project.notes,
         },
         {
-          bag: "updateProject",
+          bag: "project",
           resetOnSuccess: false,
+          preserveState: true,
+          preserveScroll: true
         }
       ),
     };
   },
   watch: {
     showInviteModal(modal) {
-      if(!modal) {
-        this.$page.errors = {}
+      if (!modal) {
+        this.$page.errors = {};
       }
+    },
+  },
+  computed: {
+    activities() {
+      return this.project.activities;
+    },
+    tasks() {
+      return this.project.tasks;
+    },
+    owner() {
+      return this.project.owner;
+    },
+    members() {
+      return this.isOwner
+        ? this.project.members
+        : [...this.project.members, this.owner];
+    },
+    isOwner() {
+      return this.project.owner.id === this.$page.user.id;
+    },
+    chat() {
+      return this.echo.join("projects-chat." + this.project?.id)
+    },
+    presentMembers(){
+      return this.participants.filter(u => u.id !== this.$page.user.id)
     }
   },
+  mounted() {
+    this.bindChannels();
+  },
   methods: {
+    bindChannels() {
+      console.info("Bind all channels: ", this.echo.connector.channels, window.Echo);
+      
+      // Chat Events...
+      this.chat
+        .here(users => {
+          console.info('Present Users: ', users)
+          this.participants = users
+        })
+        .joining(user => {
+          console.info('Joining User: ', user)
+          this.participants = this.participants.find(u => u.id === user.id) ? this.participants : this.participants.concat(user) 
+        })
+        .leaving(user => {
+          console.info('User Leaving: ', user, this.participants)
+          this.participants.splice(this.participants.indexOf(user), 1)
+          console.log('Participants: ', this.participants)
+        })
+      
+      // Project Events
+      this.echo
+        .private(`projects.${this.project?.id}`)
+        .listen("ProjectUpdated", (e) => {
+          console.log("Project Updated: ", e.project);
+          this.refreshProject = true
+        });
+    },
+    resetInviteForm() {
+      this.inviteForm.reset();
+      this.$page.errorBags["project"] = {};
+    },
     userNotation(activity) {
-      return this.$page.user.id === activity.user_id ? 'You' : activity.user.name
+      if(this.$page.user.id === activity.user_id) {
+        return 'You'
+      }
+      if(this.members.length > 0) {
+        const user = this.members.find(m => m.id === activity.user_id)
+        return user ? user.name : 'Unknown'
+      }
     },
     activityDecription(activity) {
-      return `${capitalize(camelcase(activity.description))} ${capitalize(this.getSubject(activity).context)}`
+      const description = {
+        'created_project': "Created the project",
+        'updated_project': "Updated the project",
+        'created_task': 'Created a task',
+        'completed_task': 'Completed a task',
+        'marked_task_incomplete': 'Marked a task incomplete'
+      }[activity.description] || ''
+
+      return `${description} ${capitalize(
+        this.getSubject(activity).context
+      )}`
     },
     getSubject(activity) {
-      const { subject } = activity
-
-      const context =  activity.changes ? Object.keys(activity.changes?.after) : ''
+      const context = activity.changes
+        ? Object.keys(activity.changes?.after)
+        : "";
 
       return {
-        context: context.length ? context.join(', ') : context,
-        type: activity.subject_type
-      }
-
+        context: context.length ? context.join(", ") : context,
+        type: activity.subject_type,
+      };
     },
     activityTime(date) {
-      return dayjs(date).fromNow()
+      return dayjs(date).fromNow();
     },
     locateProjectTask({ id }) {
       return this.project.tasks.find((task) => task.id === id);
     },
     async inviteMember() {
       try {
-        this.inviteForm.post(this.$route('project.invite', this.project))
-        .then((response) => {
-          if (!Object.values(this.$page.errors).length) {
-            setTimeout(() => {
-              this.showInviteModal = false;
-            }, 500);          
-            return;
-          }
-          this.$refs.inviteEmail.focus()
-        });
+        this.inviteForm
+          .post(this.$route("project.invite", this.project))
+          .then((response) => {
+            if (!Object.values(this.$page.errors).length) {
+              setTimeout(() => {
+                this.showInviteModal = false;
+              }, 500);
+              return;
+            }
+            this.$refs.inviteEmail.focus();
+          });
       } catch (error) {
         //
       }
     },
     async deleteProject() {
-      await this.$inertia.delete(this.$route('projects.delete', this.project))
+      await this.$inertia.delete(this.$route("projects.destroy", this.project));
     },
     async updateTask(task) {
       try {
@@ -403,6 +539,9 @@ export default {
         }),
         {
           completed: !task.completed,
+        },
+        {
+          preserveScroll: true
         }
       );
     },
@@ -414,6 +553,7 @@ export default {
         })
         .then((response) => {
           if (!this.updateProjectForm.hasErrors()) {
+            // livewire.emit(`projectUpdated:${this.project.id}`, this.project)
             // this.displayingToken = true
             setTimeout(() => {
               this.showEditModal = false;
@@ -424,7 +564,6 @@ export default {
     async addTask() {
       const response = await this.taskForm.post(
         this.$route("project.tasks", this.project.id),
-        this.taskForm,
         {
           preserveScroll: true,
         }
@@ -434,6 +573,15 @@ export default {
       this.taskForm.reset();
       this.showTaskModal = false;
     },
+
+    async handleRefresh() {
+      this.$inertia.reload({
+            preserveScroll: true,
+            preserveState: false
+          })
+      this.refreshProject = false
+      console.log(this.project)
+    }
   },
 };
 </script>

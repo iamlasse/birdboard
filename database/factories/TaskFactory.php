@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -26,7 +27,8 @@ class TaskFactory extends Factory
         return [
             'body' => $this->faker->sentence,
             'completed' => false,
-            'project_id' => Project::factory()
+            'project_id' => Project::factory(),
+            'user_id' => User::inRandomOrder()->first()->id
         ];
     }
 }

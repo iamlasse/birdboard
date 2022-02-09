@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Project;
 use App\Models\Task;
+use App\Models\Project;
 use Illuminate\Http\Request;
+use App\Events\ProjectUpdated;
 
 class ProjectTasksController extends Controller
 {
@@ -12,7 +13,7 @@ class ProjectTasksController extends Controller
     {
         $this->authorize('update', $project);
         $project->addTask(request()->validate(['body' => 'required']));
-
+        ProjectUpdated::broadcast($project);
         return back();
     }
 
@@ -24,6 +25,8 @@ class ProjectTasksController extends Controller
         if(request('completed') !== $task->completed) {
             request('completed') ? $task->complete() : $task->incomplete();
         }
+
+        ProjectUpdated::broadcast($project);
         
         return redirect($project->path());
     }

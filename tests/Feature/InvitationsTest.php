@@ -44,7 +44,7 @@ class InvitationsTest extends TestCase
     
     /** @test */
     public function the_invited_email_address_must_belong_to_a_user(){
-        $this->withExceptionHandling();
+        // $this->withExceptionHandling();
         $project = app(ProjectFactory::class)->create();
         
         $this->actingAs($project->owner)->post(action([ProjectInvitesController::class, 'store'], $project), $invites = [
@@ -77,9 +77,8 @@ class InvitationsTest extends TestCase
         $notOwner = User::factory()->create();
 
         $this->actingAs($notOwner)->post(action([ProjectInvitesController::class, 'store'], $project), $invites = [
-            'email' => 'notuser@test.com'
-        ])
-        ->assertStatus(403);
+            'email' => 'notowner@test.com'
+        ])->assertStatus(403);
       
     }
 }

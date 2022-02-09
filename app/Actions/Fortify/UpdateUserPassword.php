@@ -20,7 +20,8 @@ class UpdateUserPassword implements UpdatesUserPasswords
     public function update($user, array $input)
     {
         Validator::make(
-            $input, [
+            $input,
+            [
             'current_password' => ['required', 'string'],
             'password' => $this->passwordRules(),
             ]
